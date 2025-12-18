@@ -12,13 +12,13 @@ CPPFLAGS = -g0 -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Wc++14-co
 
 BUILD = build
 
-SRCMODULES = input_parser.cpp
+SRCMODULES = input_parser.cpp tokenizer.cpp
 TREE_SRC = ../tree_lib
 DEBUG_MODULE = ../debug_lib/debug.cpp
 TREE_MODULE = ../tree_lib/tree_funcs.cpp ../tree_lib/tree_dump.cpp
 OBJMODULES = $(addprefix $(BUILD)/,$(notdir $(SRCMODULES:.cpp=.o)))
-DEBUG_OBJ = $(addprefix $(BUILD)/,$(notdir $(DEBUG_MODULE:.cpp=.o)))
-TREE_OBJ = $(addprefix $(BUILD)/,$(notdir $(TREE_MODULE:.cpp=.o)))
+DEBUG_OBJ = $(DEBUG_MODULE:.cpp=.o)
+TREE_OBJ = $(TREE_MODULE:.cpp=.o)
 
 all: $(BUILD) $(BUILD)/front_end
 

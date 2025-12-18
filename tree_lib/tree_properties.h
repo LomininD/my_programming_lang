@@ -2,6 +2,7 @@
 #define TREE_PROPERTIES_H
 
 #include "../debug_lib/debug.h"
+#define TREE_VERIFICATION
 
 enum dir_t
 {
@@ -12,17 +13,16 @@ enum dir_t
 
 enum node_t
 {
-    UNKNOWN_TYPE,
-    OP,
-    VAR,
+    OPER,
+    WORD,
     NUM
 };
 
 union data_t 
 {
-    char* word;
     int number;
-    char* variable; 
+    char oper;
+    char* word; 
 };
 
 struct node
@@ -30,6 +30,7 @@ struct node
     node* parent;
     node_t type;
     data_t data;
+    int line;
     node* left;
     node* right;
 };
@@ -39,7 +40,6 @@ struct tree
     node* root;
     size_t size;
     err_t err_stat;
-    char* text_buf; // TODO - will be required if variables are multi-symbol
 };
 
 #endif

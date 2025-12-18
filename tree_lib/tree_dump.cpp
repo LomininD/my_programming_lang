@@ -7,7 +7,7 @@
 
 size_t node_count = 0;
 
-static int hash(long long int ptr);
+static int hash_ptr(long long int ptr);
 static void convert_to_image(char* code_file_name, char* image_file_name);
 static void fill_preamble(FILE* fp);
 static const node* list_nodes(FILE* fp, const node* current_node);
@@ -32,15 +32,12 @@ err_t verify_tree(const tree* tree)
     node_count = 0;
     err_t nodes_ok = verify_node(tree, tree->root, tree->size);
 
-    if (nodes_ok != ok)
-    {
-        error_count++;
-    }
+    if (nodes_ok != ok) error_count++;
 
     if (node_count != tree->size)
     {
-        printf_log_err("[from verify_tree] -> wrong size (should be %zu, but found %zu elements)",\
-                                                                         tree->size, node_count);
+        printf_log_err("[from verify_tree] -> wrong size "
+            "(should be %zu, but found %zu elements)", tree->size, node_count);
         error_count++;
     }
 
@@ -87,11 +84,11 @@ err_t verify_node(const tree* tree, const node* node, size_t max_size)
         }
     }
 
-    // if (node->string == NULL) // TODO - check if variables are strings not chars
-    // {
-    //     printf_err(debug_mode, "[from verify_node] -> node [%p] string not found\n", node);
-    //     return error;
-    // }
+    if (node->data.word == NULL)
+    {
+        printf_log_err("[from verify_node] -> node [%p] word not found\n", node);
+        return error;
+    }
 
     if (verify_node(tree, node->left,  max_size) == ok && \
         verify_node(tree, node->right, max_size) == ok) return ok;
@@ -106,16 +103,16 @@ err_t process_tree_verification(const tree* tree)
     switch (verified)
     {
         case null_data:
-            printf_log_err("verification failed not enough data to show additional information\n");
+            printf_log_err("tree [%p] verification failed: not enough data to show additional information\n", tree);
             return error;
             break;
         case error:
-            printf_log_err("verification failed\n"); 
+            printf_log_err("tree [%p] verification failed\n", tree); 
             print_tree_dump(tree, "Verification failed\n");
             return error;
             break;
         case ok:
-            printf_debug_msg("verification passed\n");
+            printf_debug_msg("tree [%p] verification passed\n", tree);
             return ok;
             break;
     };
@@ -225,7 +222,7 @@ void fill_preamble(FILE* fp)
 }
 
 
-#define PRINT_PTR(PTR) FPRINT("<FONT face = \"monospace\" color=\"#%x\"> %p </FONT>", hash((long long int) PTR), PTR)
+#define PRINT_PTR(PTR) FPRINT("<FONT face = \"monospace\" color=\"#%x\"> %p </FONT>", hash_ptr((long long int) PTR), PTR)
 #define BEGIN_ROW FPRINT("<TR>")
 #define END_ROW FPRINT("</TR>")
 
@@ -248,21 +245,30 @@ const node* list_nodes(FILE* fp, const node* current_node)
     END_ROW;
 
     BEGIN_ROW;
+    FPRINT("<TD COLSPAN=\"2\">"); FPRINT("line %s </TD>", decode_node_type_enum(current_node->type));
+    END_ROW;
+
+    BEGIN_ROW;
     FPRINT("<TD COLSPAN=\"2\">"); 
     switch (current_node->type)
     {
         case NUM:
             FPRINT("%lg", current_node->data.number);
             break;
-        case VAR:
-            FPRINT("%c", current_node->data.variable);
+        case WORD:
+            FPRINT("%s", current_node->data.word);
             break;
+        case OPER:
+            FPRINT("%c", current_node->data.oper);
         default:
             FPRINT("unknown");
     };
     FPRINT("</TD>");
     END_ROW;
 
+    BEGIN_ROW;
+    FPRINT("<TD COLSPAN=\"2\">"); FPRINT("line %d </TD>", current_node->line);
+    END_ROW;
 
     BEGIN_ROW;
     FPRINT("<TD PORT=\"f0\">"); FPRINT("left ["); PRINT_PTR(current_node->left); FPRINT("] </TD>");
@@ -296,10 +302,10 @@ const char* decode_node_type_enum(node_t type)
 {
     switch(type)
     {
-        case OP:
-            return "operation";
-        case VAR:
-            return "variable";
+        case OPER:
+            return "oper";
+        case WORD:
+            return "word";
         case NUM:
             return "number";
         default:
@@ -308,7 +314,7 @@ const char* decode_node_type_enum(node_t type)
 }
 
 
-int hash(long long int ptr)
+int hash_ptr(long long int ptr)
 {
     int hashed = 0;
 
