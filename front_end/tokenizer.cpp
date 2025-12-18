@@ -1,4 +1,5 @@
 #include "tokenizer.h"
+#include "basic_funcs.h"
 #include <assert.h>
 
 static bool is_space(char c);
@@ -21,6 +22,7 @@ err_t tokenize_text_buf(file_data_t* file_data, token_array_t* token_arr_struct)
 
 	char* text_buf_pos = skip_spaces(TEXT_BUF);
 	int current_line = 1;
+	char* begin_line_ptr = TEXT_BUF;
 	printf_debug_msg("%s\n", text_buf_pos);
 
 	while (*text_buf_pos != '\0')
@@ -31,7 +33,7 @@ err_t tokenize_text_buf(file_data_t* file_data, token_array_t* token_arr_struct)
 		if (text_buf_pos == NULL) return error;
 		if (text_buf_pos == prev_text_buf_pos)
 		{
-			printf_log_err("[from tokenizer][%s:%d:%d] -> failed to recognized token\n", FILE_NAME, current_line, ((size_t)text_buf_pos - (size_t)TEXT_BUF)/sizeof(char) + 1);
+			printf_log_err("[from tokenizer][%s:%d:%d] -> failed to recognized token\n", FILE_NAME, current_line, get_current_pos(begin_line_ptr, text_buf_pos));
 			return error;
 		}
 

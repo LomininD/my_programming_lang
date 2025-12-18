@@ -1,0 +1,100 @@
+
+SALAD FROM APPLES, BANANAS RECIPE
+
+begin heating up the oven
+
+take 0 of salad
+add apples to salad
+add banana to salad
+serve salad
+
+and all comes to the oven
+
+
+MAIN RECIPE
+
+begin heating up the oven
+
+take 0 of apples
+take 0 of bananas
+buy apples						
+buy bananas						
+serve salad from apples, bananas
+
+and all comes to the oven
+
+Bon Appetit!
+
+
+
+========================================
+
+MAIN RECIPE
+
+begin heating up the oven
+
+take 0 of steak
+buy steak
+
+if 2 is just enough for steak
+begin heating up the oven
+Bon Appetit! 
+and all comes to the oven
+
+otherwise
+begin heating up the oven
+mix steak with 4
+and all comes to the oven
+
+========================================
+
+fact from n recipe											// func fact(n)
+<															// {
+	take result in quantity of 1							// 		result = 1;
+	cook until n less or equal to 0							// 		while (n > 0)
+	>														//		{
+		take result in quantity of n portions of result		// 			result = result * n;
+		take n in quantity of n - 1							// 			n = n - 1;
+	<														// 		}
+	serve result											// 		return result;
+>															// }
+$
+
+
+
+
+KEYWORDS
+
+a = b			take a in quantity of b		
+a + b       	a + b
+a - b			a - b
+a * b			a portions of b
+a / b			a diluted by b 
+sqrt a			seasoned a
+while 			cook until
+if				if
+else if 		otherwise if
+else			otherwise
+return 			serve
+in				buy
+print			taste
+end of program	Bon Appetit!
+exit 			put it in the fridge
+;				\n
+()				()
+{}				<>
+,				,	
+salad from apples, bananas   call func salad(apples, bananas)
+
+OPERATORS
+
+a is less than b  					a <  b
+a is less or equal	to b			a <= b
+a is more than b  					a >  b
+a is more or equal to b			a >= b
+a is equal to  b   				a == b
+a is not equal to b				a != b
+
+
+(block:(key:func(func:fact(.)(.))(next:(var:num(.)(.))(block:(key:if(oper:>(var:num(.)(.))(num:1(.)(.)))(block:(key:=(var:num(.)(.))(oper:*(var:num(.)(.))(func:fact(var:num(.)(.))(.))))(.)))(next:(key:else(block:(key:return(num:1(.)(.))(.))(.))(.))(key:return(var:num(.)(.))(.))))))(next:(key:int(key:=(var:num(.)(.))(num:0(.)(.)))(.))(next:(key:in(var:num(.)(.))(.))(key:out(func:fact(var:num(.)(.))(.))(.)))))
+

@@ -12,7 +12,7 @@ CPPFLAGS = -g0 -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Wc++14-co
 
 BUILD = build
 
-SRCMODULES = input_parser.cpp tokenizer.cpp
+SRCMODULES = input_parser.cpp tokenizer.cpp basic_funcs.cpp
 TREE_SRC = ../tree_lib
 DEBUG_MODULE = ../debug_lib/debug.cpp
 TREE_MODULE = ../tree_lib/tree_funcs.cpp ../tree_lib/tree_dump.cpp
