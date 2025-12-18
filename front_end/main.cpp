@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 	CHECK_FOR_ERR(file_is_read);
 
 	token_array_t tokens[] = {};
-	err_t tokenized = tokenize_text_buf(input_file_data.text_buf, tokens);
+	err_t tokenized = tokenize_text_buf(&input_file_data, tokens);
 	CHECK_FOR_ERR(tokenized);
 
 	clear_input_file_data(&input_file_data);
