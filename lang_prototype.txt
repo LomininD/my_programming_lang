@@ -58,7 +58,7 @@ fact from n recipe											// func fact(n)
 	<														// 		}
 	serve result											// 		return result;
 >															// }
-$
+
 
 
 

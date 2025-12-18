@@ -1,10 +1,15 @@
 #include "tokenizer.h"
 #include "basic_funcs.h"
 #include <assert.h>
+#include <ctype.h>
+#include <string.h>
 
 static bool is_space(char c);
 static char* skip_spaces(char* text_buf);
-static char* get_number(char* text_buf_pos, token_array_t* token_arr_struct, int current_line);
+static char* get_number(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
+static char* get_oper(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
+char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
+char* skip_comment(char* text_buf_pos);
 static err_t check_token_arr_capacity(token_array_t* token_arr_struct);
 
 
@@ -21,23 +26,37 @@ err_t tokenize_text_buf(file_data_t* file_data, token_array_t* token_arr_struct)
 	printf_debug_msg("tokenize_text_buf: began_process\n");
 
 	char* text_buf_pos = skip_spaces(TEXT_BUF);
-	int current_line = 1;
-	char* begin_line_ptr = TEXT_BUF;
-	printf_debug_msg("%s\n", text_buf_pos);
+	debug_info_t debug_info = {FILE_NAME, 1, TEXT_BUF};
 
 	while (*text_buf_pos != '\0')
 	{
-		char* prev_text_buf_pos = text_buf_pos;
-		text_buf_pos = get_number(text_buf_pos, token_arr_struct, current_line);
+		printf_debug_msg("tokenize_text_buf: left to proceed:\n---\n");
+		printf_debug_msg("%s\n---\n", text_buf_pos);
 
+		char* prev_text_buf_pos = text_buf_pos;
+
+		text_buf_pos = get_number(text_buf_pos, token_arr_struct, &debug_info);
 		if (text_buf_pos == NULL) return error;
+
 		if (text_buf_pos == prev_text_buf_pos)
 		{
-			printf_log_err("[from tokenizer][%s:%d:%d] -> failed to recognized token\n", FILE_NAME, current_line, get_current_pos(begin_line_ptr, text_buf_pos));
-			return error;
+			text_buf_pos = get_oper(text_buf_pos, token_arr_struct, &debug_info);
+			if (text_buf_pos == NULL) return error;
 		}
 
-		printf_debug_msg("%s\n", text_buf_pos);
+		if (text_buf_pos == prev_text_buf_pos)
+		{
+			text_buf_pos = get_word(text_buf_pos, token_arr_struct, &debug_info);
+			if (text_buf_pos == NULL) return error;
+		}
+
+		if (text_buf_pos == prev_text_buf_pos)
+		{
+			printf_log_err("[from tokenizer][%s:%d:%d] -> failed to recognize token\n", 
+				debug_info.file_name, debug_info.current_line, 
+				get_current_pos(debug_info.begin_line_ptr, text_buf_pos));
+			return error;
+		}
 	}
 
 	printf_debug_msg("tokenize_text_buf: ended process\n\n");
@@ -48,7 +67,9 @@ err_t tokenize_text_buf(file_data_t* file_data, token_array_t* token_arr_struct)
 #undef FILE_NAME
 
 
-char* get_number(char* text_buf_pos, token_array_t* token_arr_struct, int current_line)
+#define CUR_LINE debug_info->current_line
+
+char* get_number(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info)
 {
 	assert(text_buf_pos);
 
@@ -82,20 +103,147 @@ char* get_number(char* text_buf_pos, token_array_t* token_arr_struct, int curren
 	{
 		printf_debug_msg("get_number: current token is not a number, "
 													"ended process\n");
+		if (is_negative) text_buf_pos--;
 		return text_buf_pos;
 	}
 
 	err_t checked = check_token_arr_capacity(token_arr_struct);
-
 	if (checked != ok) return  NULL;
 
-	fill_node_draft(&(T_ARR[ARR_SIZE]), NUM, (union data_t){.number = number}, current_line);
+	fill_node_draft(&T_ARR[ARR_SIZE], NUM, (union data_t){.number = number}, CUR_LINE);
 	ARR_SIZE++;
 
 	text_buf_pos = skip_spaces(text_buf_pos);
 
 	printf_debug_msg("get_number: got number %d\n", number);
 	printf_debug_msg("get_number: ended process\n\n");
+	return text_buf_pos;
+}
+
+
+char* get_oper(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info)
+{
+	assert(text_buf_pos);
+
+	printf_debug_msg("get_oper: began process\n");
+	char oper = *text_buf_pos;
+
+	if (oper == '+' || oper == '-' ||
+		oper == '(' || oper == ')' ||
+		oper == '<' || oper == '>' ||
+		oper == ',' || oper == '\n')
+	{	
+		err_t checked = check_token_arr_capacity(token_arr_struct);
+		if (checked != ok) return NULL;
+
+		fill_node_draft(&T_ARR[ARR_SIZE], OPER, (union data_t){.oper=oper}, CUR_LINE);
+		ARR_SIZE++;
+		text_buf_pos++;
+	}
+	else
+	{
+		printf_debug_msg("get_oper: current token is not an operator, ended process\n\n");
+		return text_buf_pos;
+	}
+
+	if (oper == '\n')
+	{
+		printf_debug_msg("get_oper: got oper \\n\n");
+		debug_info->current_line++;
+		debug_info->begin_line_ptr = text_buf_pos;
+	}
+	else printf_debug_msg("get_oper: got oper %c\n", oper);
+
+	text_buf_pos = skip_spaces(text_buf_pos);
+
+	printf_debug_msg("get_oper: ended process\n\n");
+	return text_buf_pos;
+} 
+
+
+#define FILE_NAME debug_info->file_name
+#define LINE_BEGIN debug_info->begin_line_ptr
+
+char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info)
+{
+	assert(text_buf_pos);
+	assert(token_arr_struct);
+
+	printf_debug_msg("get_word: began process\n\n");
+
+	char* word = (char*) calloc(max_word_len, sizeof(char));
+	if (word == NULL)
+	{
+		printf_log_err("[from get_word] -> could not allocate memory for word\n");
+		return NULL;
+	}
+
+	int word_size = 0;
+
+	while((*text_buf_pos >= 'A' && *text_buf_pos <= 'Z') ||
+		  (*text_buf_pos >= 'a' && *text_buf_pos <= 'z') ||
+		  (*text_buf_pos >= '0' && *text_buf_pos <= '9') ||
+		   *text_buf_pos == '_' || *text_buf_pos == '!'  || *text_buf_pos == ':')
+	{
+		printf_debug_msg("get_word: got %c\n", *text_buf_pos);
+		
+		if ((*text_buf_pos == '!' || *text_buf_pos == ':') && word_size == 0)
+		{
+			printf_log_err("[from tokenizer][%s:%d:%d] -> failed to recognize token\n", 
+					FILE_NAME, CUR_LINE, get_current_pos(LINE_BEGIN, text_buf_pos));
+			return NULL;
+		}
+		word[word_size] = (char) tolower(*text_buf_pos);
+		word_size++;
+		text_buf_pos++;
+		if (word_size == max_word_len)
+		{
+			printf_log_err("[from tokenizer][%s:%d:%d] -> max word size exceeded\n", 
+					FILE_NAME, CUR_LINE, get_current_pos(LINE_BEGIN, text_buf_pos));
+			return NULL;
+		}
+	}
+
+	if (word_size == 0)
+	{
+		printf_debug_msg("get_word: current_token is not a word, ended process\n");
+		return text_buf_pos;
+	}
+
+	printf_debug_msg("get_word: recognized word %s\n", word);
+
+	text_buf_pos = skip_spaces(text_buf_pos);
+
+	if (strcmp(word, "note:") == 0)
+	{
+		printf_debug_msg("get_word: got comment\n");
+		text_buf_pos = skip_comment(text_buf_pos);
+		printf_debug_msg("get_word: skipped comment, ended process\n\n");
+		return text_buf_pos;
+	}
+
+	// TODO - another function
+	err_t checked = check_token_arr_capacity(token_arr_struct);
+	if (checked != ok) return NULL;
+
+	fill_node_draft(&T_ARR[ARR_SIZE], WORD, (union data_t){.word=word}, CUR_LINE);
+	ARR_SIZE++;
+	//
+
+	printf_debug_msg("get_word: ended process\n\n");
+	return text_buf_pos;
+}
+
+#undef CUR_LINE
+
+char* skip_comment(char* text_buf_pos)
+{
+	assert(text_buf_pos);
+
+	while(*text_buf_pos != '\n' && *text_buf_pos != '\0')
+	{
+		text_buf_pos++;
+	}
 	return text_buf_pos;
 }
 
@@ -111,15 +259,19 @@ void dump_tokens(token_array_t* token_arr_struct)
 
 	for (size_t i = 0; i < ARR_SIZE; i++)
 	{
-		printf_debug_msg("%zu. type: %s, value: ", i, 
+		printf_debug_msg("%zu. line: %d, type: %s, value: ", i, T_ARR[i].line, 
 					decode_node_type_enum(TOKEN_TYPE));
 		switch(TOKEN_TYPE)
 		{
 			case NUM:
 				printf_debug_msg("%d\n", TOKEN_DATA.number);
 				break;
-			case OPER:
-				printf_debug_msg("%c\n", TOKEN_DATA.oper);
+			case OPER: // FIXME - {}
+				if (TOKEN_DATA.oper == '\n')
+				{
+					printf_debug_msg("\\n\n");
+				}
+				else printf_debug_msg("%c\n", TOKEN_DATA.oper);
 				break;
 			case WORD:
 				printf_debug_msg("%s\n", TOKEN_DATA.word);
@@ -155,7 +307,8 @@ err_t check_token_arr_capacity(token_array_t* token_arr_struct)
 		}
 		T_ARR = temp_token_arr;
 
-		printf_debug_msg("check_token_arr_capacity: memory reallocated successfully\n");
+		printf_debug_msg("check_token_arr_capacity: memory reallocated successfully, "
+													"new capacity: %zu\n", ARR_CAP);
 	}
 	else
 	{

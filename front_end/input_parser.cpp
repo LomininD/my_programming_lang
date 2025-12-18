@@ -75,7 +75,7 @@ err_t read_input_file(file_data_t* input_file_data)
 	TEXT_BUF[bytes_in_file] = '\0';
 	TEXT_BUF_SIZE = bytes_in_file;
 
-	printf_debug_msg("read_input_file: dumping text_buf:\n\n%s\n\n", TEXT_BUF);
+	printf_debug_msg("read_input_file: dumping text_buf:\n---\n%s\n---\n", TEXT_BUF);
 
 	fclose(FILE_PTR);
 	printf_debug_msg("read_input_file: closed input file\n");

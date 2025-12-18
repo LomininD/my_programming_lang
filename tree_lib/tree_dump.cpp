@@ -253,7 +253,7 @@ const node* list_nodes(FILE* fp, const node* current_node)
     switch (current_node->type)
     {
         case NUM:
-            FPRINT("%lg", current_node->data.number);
+            FPRINT("%d", current_node->data.number);
             break;
         case WORD:
             FPRINT("%s", current_node->data.word);
@@ -307,7 +307,7 @@ const char* decode_node_type_enum(node_t type)
         case WORD:
             return "word";
         case NUM:
-            return "number";
+            return "num";
         default:
             return "unknown";
     };
