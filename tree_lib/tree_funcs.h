@@ -8,8 +8,9 @@
 node* create_node();
 tree* tree_ctor();
 void destroy_tree(tree* tree);
-size_t destroy_node(node* node);
-node* create_node_draft(node_t type, union data_t data, int line);
+void destroy_node_data(node* node_ptr);
+size_t destroy_node(node* node_ptr);
+void fill_node_draft(node* node_ptr, node_t type, union data_t data, int line);
 
 
 #ifdef TREE_VERIFICATION

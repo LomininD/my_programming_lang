@@ -22,16 +22,14 @@ node* create_node()
 }
 
 
-#define DATA new_node_ptr->data
+#define DATA node_ptr->data
 
-node* create_node_draft(node_t type, union data_t data, int line)
+void fill_node_draft(node* node_ptr, node_t type, union data_t data, int line)
 {
-    node* new_node_ptr = create_node();
+    assert(node_ptr);
 
-    assert(new_node_ptr);
-
-    new_node_ptr->type = type;
-    new_node_ptr->line = line;
+    node_ptr->type = type;
+    node_ptr->line = line;
 
     switch(type)
     {
@@ -45,10 +43,8 @@ node* create_node_draft(node_t type, union data_t data, int line)
             DATA.word = data.word;
             break;
         default:
-            return NULL;
+            return;
     };
-
-    return new_node_ptr;
 }
 
 #undef DATA
@@ -65,23 +61,32 @@ void destroy_tree(tree* tree_ptr)
 }
 
 
-size_t destroy_node(node* node)
+void destroy_node_data(node* node_ptr)
 {
-    if (node == NULL) return 0;
+    assert(node_ptr != NULL);
+
+    if (node_ptr->type == WORD) free(node_ptr->data.word);
+    // free other types if required
+}
+
+
+size_t destroy_node(node* node_ptr)
+{
+    if (node_ptr == NULL) return 0;
 
     size_t nodes_destroyed = 0;
 
-    if (node->left != NULL)
+    if (node_ptr->left != NULL)
     {
-        nodes_destroyed += destroy_node(node->left);
+        nodes_destroyed += destroy_node(node_ptr->left);
     }
-    if (node->right != NULL)
+    if (node_ptr->right != NULL)
     {
-        nodes_destroyed += destroy_node(node->right);
+        nodes_destroyed += destroy_node(node_ptr->right);
     }
 
-    if (node->type == WORD) free(node->data.word); // free other types if required
-    free(node);
+    destroy_node_data(node_ptr);
+    free(node_ptr);
 
     nodes_destroyed ++;
 

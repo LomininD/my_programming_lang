@@ -13,21 +13,18 @@ struct file_data_t
 	size_t text_buf_size;
 };
 
-const int min_size_of_node_arr = 100;
+const int min_size_of_token_arr = 100;
 
 struct token_array_t
 {
-	node* array[min_size_of_node_arr];
+	node* array;
 	size_t size;
 	size_t capacity;
 };
 
-#define CHECK_FOR_ERR(VAR){											\
-	if (VAR != ok) 													\
-	{																\
-		printf_log_abortion("main: aborting due to error\n", NULL); \
-		return 1;													\
-	}																\
+#define IF_ERR(VAR){											\
+	if (VAR == true) 													\
+		return 1;														\
 }
 
 #endif
