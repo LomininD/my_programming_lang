@@ -1,7 +1,9 @@
 #include "input_parser.h"
 #include "front_end_properties.h"
 #include "tokenizer.h"
+#include "syntax_procession.h"
 
+// TODO - IF ERR make less args
 
 bool check_for_err(err_t res, file_data_t* input_file_data);
 bool check_for_err(err_t res, file_data_t* input_file_data, token_array_t* tokens);
@@ -28,12 +30,12 @@ int main(int argc, char* argv[])
 
 	dump_tokens(&tokens);
 
-	//err_t linked = link_tokens(&tokens);
-
-
+	err_t linked = link_tokens(&tokens, input_file_data.input_file_name);
+	IF_ERR(check_for_err(linked, &input_file_data, &tokens));
 
 	clear_token_arr(&tokens);
 	clear_input_file_data(&input_file_data);
+	end_debugging();
 	return 0;
 }
 

@@ -32,7 +32,6 @@ struct node
     data_t data;
     int code;
     int line;
-    int word_len;
     node* parent;
     node* left;
     node* right;

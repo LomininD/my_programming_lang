@@ -130,6 +130,9 @@ char* get_number(char* text_buf_pos, token_array_t* token_arr_struct, debug_info
 }
 
 
+#define OPER_STR oper_data[i].oper_str
+#define CODE oper_data[i].oper
+
 char* get_oper(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info)
 {
 	assert(text_buf_pos);
@@ -146,6 +149,13 @@ char* get_oper(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t
 		if (checked != ok) return NULL;
 
 		fill_node_draft(&T_ARR[ARR_SIZE], OPER, (union data_t){.oper=oper}, CUR_LINE);
+
+		for (int i = 0; i < oper_count; i++)
+		{
+			if (*text_buf_pos == *OPER_STR)
+				T_ARR[ARR_SIZE].code = CODE;
+		}
+
 		ARR_SIZE++;
 		text_buf_pos++;
 	}
@@ -172,9 +182,7 @@ char* get_oper(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t
 
 #define FILE_NAME debug_info->file_name
 #define LINE_BEGIN debug_info->begin_line_ptr
-#define OPER_STR oper_data[i].oper_str
 #define STR_LEN oper_data[i].oper_str_len
-#define CODE oper_data[i].oper
 
 char* get_keyword(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info)
 {
@@ -325,19 +333,20 @@ void dump_tokens(token_array_t* token_arr_struct)
 			case OPER: // FIXME - {}
 				if (TOKEN_DATA.oper == '\n')
 				{
-					printf_debug_msg("\\n\n");
+					printf_debug_msg("\\n, ");
 				}
-				else printf_debug_msg("%c\n", TOKEN_DATA.oper);
+				else printf_debug_msg("%c, ", TOKEN_DATA.oper);
 				break;
 			case WORD:
-				printf_debug_msg("%s\n", TOKEN_DATA.word);
+				printf_debug_msg("%s, ", TOKEN_DATA.word);
 				break;
 			case KEY:
-				printf_debug_msg("%s\n", TOKEN_DATA.word);
+				printf_debug_msg("%s, ", TOKEN_DATA.word);
 				break;
 			default:
 				break;
 		};
+		printf_debug_msg("code: %d\n", T_ARR[i].code);
 	}
 	printf_log_bold("\n================\n\n", NULL);
 }

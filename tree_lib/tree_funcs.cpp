@@ -30,9 +30,7 @@ void fill_node_draft(node* node_ptr, node_t type, union data_t data, int line)
 
     node_ptr->type = type;
     node_ptr->line = line;
-
-    if (type == WORD)
-        printf("word = %s\n", data.word);
+    node_ptr->code = -1;
 
     switch(type)
     {
