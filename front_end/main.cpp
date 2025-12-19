@@ -4,6 +4,7 @@
 #include "syntax_procession.h"
 
 // TODO - IF ERR make less args
+// TODO - wrong error line if 
 
 bool check_for_err(err_t res, file_data_t* input_file_data);
 bool check_for_err(err_t res, file_data_t* input_file_data, token_array_t* tokens);
@@ -30,8 +31,12 @@ int main(int argc, char* argv[])
 
 	dump_tokens(&tokens);
 
-	err_t linked = link_tokens(&tokens, input_file_data.input_file_name);
+	tree token_tree = {}; 
+
+	err_t linked = link_tokens(&tokens, input_file_data.input_file_name, &token_tree);
 	IF_ERR(check_for_err(linked, &input_file_data, &tokens));
+
+	print_tree_dump(&token_tree, "Token tree view\n");
 
 	clear_token_arr(&tokens);
 	clear_input_file_data(&input_file_data);

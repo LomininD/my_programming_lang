@@ -1,18 +1,24 @@
 #include "syntax_procession.h"
 #include <assert.h>
+#include <string>
 
 static node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* file_name);
 node* get_token_tree(token_array_t* token_arr_struct, const char* file_name);
 
 err_t syntax_err = ok;
 
-err_t link_tokens(token_array_t* token_arr_struct, const char* file_name)
+#define CHECK_ERR(RET) if (syntax_err != ok) return RET
+
+err_t link_tokens(token_array_t* token_arr_struct, const char* file_name, tree* token_tree)
 {
 	assert(token_arr_struct);
 
 	printf_debug_msg("link_tokens: began process\n");
 
-	node* token_tree_root = get_token_tree(token_arr_struct, file_name);
+	token_tree->root = get_token_tree(token_arr_struct, file_name);
+	CHECK_ERR(error);
+
+	print_tree_dump(token_tree, "Token tree view\n");
 
 	printf_debug_msg("link_tokens: ended process\n\n");
 	return ok;
@@ -41,8 +47,6 @@ node* get_token_tree(token_array_t* token_arr_struct, const char* file_name)
 	return connection_node;
 }
 
-#undef ARR_SIZE
-
 
 #define CUR_TOKEN token_arr_struct->array[*pos]
 #define PREV_TOKEN token_arr_struct->array[(*pos) - 1]
@@ -58,6 +62,16 @@ node* get_token_tree(token_array_t* token_arr_struct, const char* file_name)
 				syntax_err = error;										\
 				return NULL;											\
 }
+#define NEXT (*pos)++
+#define CHECK_SIZE(){														\
+	if (*pos >= ARR_SIZE) {													\
+		printf_log_err("[syntax error][%s:%d] -> not enough tokens\n",		\
+								file_name, PREV_TOKEN.line);				\
+		syntax_err = error;													\
+		return NULL;														\
+	}																		\
+}
+#define NEXT_T NEXT; CHECK_SIZE()
 
 node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* file_name)
 {
@@ -69,13 +83,14 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 
 	if (CUR_TOKEN.type != WORD)
 		return NULL;
+
 	printf_debug_msg("get_func_decl: recognized name of recipe\n");
 
-	node* name = create_node();
-	fill_node_draft(name, WORD, (union data_t){.word = "name"}, -1);
+	node* name = create_node(); // name should be freed specially 
+	fill_node_draft(name, FUNC_INFO, (union data_t){.word = strdup("name")}, -1);
 	name->left = &CUR_TOKEN;
 	
-	(*pos)++;
+	NEXT_T;
 
 	printf_debug_msg("get_func_decl: created name node\n");
 
@@ -83,25 +98,27 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 	{
 		printf_debug_msg("get_func_decl: recognized argument list\n");
 		
-		(*pos)++;
+		NEXT_T;
 		if (CUR_TOKEN.type != WORD) ARG_ERR;
 
 		printf_debug_msg("get_func_decl: recognized argument\n");
 
-		(*pos)++;
+		NEXT_T;
 		node* prev_node = name;
+
 		while (CUR_TOKEN.code == COMMA)
 		{
 			prev_node->right = &CUR_TOKEN;
-			prev_node = &CUR_TOKEN; // fix it
-			(*pos)++;
-			if (CUR_TOKEN.type == WORD) prev_node->left = &CUR_TOKEN;
-			else ARG_ERR;
-			(*pos)++;
+			CUR_TOKEN.left = &PREV_TOKEN;
+			prev_node = &CUR_TOKEN;
+			NEXT_T;
+			if (CUR_TOKEN.type != WORD) ARG_ERR;
+			NEXT_T;
 
 			printf_debug_msg("get_func_decl: recognized another argument\n");
 		}
-		prev_node->left = &PREV_TOKEN;
+
+		prev_node->right = &PREV_TOKEN;
 	}
 
 	if (CUR_TOKEN.code != RECIPE)
@@ -117,9 +134,11 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 	CUR_TOKEN.left = name;
 	connection_node = &CUR_TOKEN;
 
-	pos++;
+	NEXT_T;
 
 	if (CUR_TOKEN.code != EOS) EOS_ERR;
+
+	NEXT;
 
 	printf_debug_msg("get_func_decl: ended process\n\n");
 	return connection_node;
@@ -129,6 +148,11 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 #undef ARG_ERR
 #undef EOF_ERR
 #undef PREV_TOKEN
+#undef CHECK_ERR
+#undef NEXT
+#undef CHECK_SIZE
+#undef NEXT_T
+#undef ARR_SIZE
 
 
 // node* get_token_tree(token_array_t* token_arr_struct, size_t* pos, char* file_name)

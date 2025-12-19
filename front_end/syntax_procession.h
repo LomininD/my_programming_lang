@@ -6,7 +6,7 @@
 #include "../tree_lib/tree_funcs.h"
 #include "../tree_lib/tree_dump.h"
 
-err_t link_tokens(token_array_t* token_arr_struct, const char* file_name);
+err_t link_tokens(token_array_t* token_arr_struct, const char* file_name, tree* token_tree);
 
 
 #endif

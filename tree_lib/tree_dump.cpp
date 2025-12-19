@@ -237,37 +237,29 @@ const node* list_nodes(FILE* fp, const node* current_node)
     FPRINT("<TABLE BORDER=\"0\" CELLBORDER=\"1\">");
 
     BEGIN_ROW;
-    FPRINT("<TD COLSPAN=\"2\">"); FPRINT("parent ["); PRINT_PTR(current_node->parent); FPRINT("] </TD>");
-    END_ROW;
-
-    BEGIN_ROW;
     FPRINT("<TD COLSPAN=\"2\">"); FPRINT("ptr ["); PRINT_PTR(current_node); FPRINT("] </TD>");
     END_ROW;
 
     BEGIN_ROW;
-    FPRINT("<TD COLSPAN=\"2\">"); FPRINT("line %s </TD>", decode_node_type_enum(current_node->type));
-    END_ROW;
-
-    BEGIN_ROW;
-    FPRINT("<TD COLSPAN=\"2\">"); 
+    FPRINT("<TD>"); 
     switch (current_node->type)
     {
         case NUM:
             FPRINT("%d", current_node->data.number);
             break;
+        case FUNC_INFO:
+        case KEY:
         case WORD:
             FPRINT("%s", current_node->data.word);
             break;
         case OPER:
             FPRINT("%c", current_node->data.oper);
+            break;
         default:
             FPRINT("unknown");
     };
     FPRINT("</TD>");
-    END_ROW;
-
-    BEGIN_ROW;
-    FPRINT("<TD COLSPAN=\"2\">"); FPRINT("line %d </TD>", current_node->line);
+    FPRINT("<TD>"); FPRINT("code: %d </TD>", current_node->code);
     END_ROW;
 
     BEGIN_ROW;

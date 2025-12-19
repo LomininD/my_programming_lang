@@ -40,10 +40,9 @@ void fill_node_draft(node* node_ptr, node_t type, union data_t data, int line)
         case NUM:
             DATA.number = data.number;
             break;
-        case WORD:
-            DATA.word = data.word;
-            break;
         case KEY:
+        case FUNC_INFO:
+        case WORD:
             DATA.word = data.word;
             break;
         default:

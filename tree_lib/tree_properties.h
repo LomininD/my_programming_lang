@@ -17,6 +17,7 @@ enum node_t
     WORD,
     NUM,
     KEY,
+    FUNC_INFO
 };
 
 union data_t 
