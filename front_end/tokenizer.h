@@ -5,7 +5,7 @@
 #include "../tree_lib/tree_properties.h"
 #include "../tree_lib/tree_funcs.h"
 
-const int max_word_len = 100;
+const int max_word_len = 25;
 
 struct debug_info_t
 {

@@ -308,6 +308,8 @@ const char* decode_node_type_enum(node_t type)
             return "word";
         case NUM:
             return "num";
+        case KEY:
+            return "key";
         default:
             return "unknown";
     };

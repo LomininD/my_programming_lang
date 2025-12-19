@@ -1,5 +1,6 @@
 #include "tokenizer.h"
 #include "basic_funcs.h"
+#include "oper_structs.h"
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
@@ -8,8 +9,10 @@ static bool is_space(char c);
 static char* skip_spaces(char* text_buf);
 static char* get_number(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
 static char* get_oper(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
-char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
-char* skip_comment(char* text_buf_pos);
+static char* get_keyword(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
+static char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info);
+static char* skip_comment(char* text_buf_pos);
+static char* allocate_mem_for_word(size_t size);
 static err_t check_token_arr_capacity(token_array_t* token_arr_struct);
 
 
@@ -41,6 +44,12 @@ err_t tokenize_text_buf(file_data_t* file_data, token_array_t* token_arr_struct)
 		if (text_buf_pos == prev_text_buf_pos)
 		{
 			text_buf_pos = get_oper(text_buf_pos, token_arr_struct, &debug_info);
+			if (text_buf_pos == NULL) return error;
+		}
+
+		if (text_buf_pos == prev_text_buf_pos)
+		{
+			text_buf_pos = get_keyword(text_buf_pos, token_arr_struct, &debug_info);
 			if (text_buf_pos == NULL) return error;
 		}
 
@@ -163,39 +172,86 @@ char* get_oper(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t
 
 #define FILE_NAME debug_info->file_name
 #define LINE_BEGIN debug_info->begin_line_ptr
+#define OPER_STR oper_data[i].oper_str
+#define STR_LEN oper_data[i].oper_str_len
+#define CODE oper_data[i].oper
+
+char* get_keyword(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info)
+{
+	assert(text_buf_pos);
+	assert(token_arr_struct);
+
+	printf_debug_msg("get_keyword: began process\n");
+
+	for (int i = 0; i < (int) oper_count; i++)
+	{
+		if (strncmp(text_buf_pos, OPER_STR, STR_LEN) == 0)
+		{
+			err_t checked = check_token_arr_capacity(token_arr_struct);
+			if (checked != ok) return NULL;
+
+			char* word = allocate_mem_for_word(STR_LEN + 1);
+			if (word == NULL) return NULL;
+
+			word = strcpy(word, OPER_STR);
+
+			fill_node_draft(&T_ARR[ARR_SIZE], KEY, (union data_t){.word = word}, CUR_LINE);
+			T_ARR[ARR_SIZE].code = CODE;
+			ARR_SIZE++;
+
+
+			printf_debug_msg("get_word: recognized keyword %s, ended process\n", OPER_STR);
+			text_buf_pos += STR_LEN + 1; 
+			text_buf_pos = skip_spaces(text_buf_pos);
+			return text_buf_pos;
+		}
+	}
+
+	printf_debug_msg("get_keyword: current token is not a keyword\n");
+	printf_debug_msg("get_keyword: ended process\n\n");
+
+	return text_buf_pos;
+}
+
+#undef OPER_STR
+#undef STR_LEN
+#undef CODE
+
 
 char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t* debug_info)
 {
 	assert(text_buf_pos);
 	assert(token_arr_struct);
 
-	printf_debug_msg("get_word: began process\n\n");
+	printf_debug_msg("get_word: began process\n");
 
-	char* word = (char*) calloc(max_word_len, sizeof(char));
-	if (word == NULL)
-	{
-		printf_log_err("[from get_word] -> could not allocate memory for word\n");
-		return NULL;
-	}
+	// allocating memory for word
+	char* word = allocate_mem_for_word(max_word_len);
+	if (word == NULL) return NULL;
 
 	int word_size = 0;
 
+	// main loop
 	while((*text_buf_pos >= 'A' && *text_buf_pos <= 'Z') ||
 		  (*text_buf_pos >= 'a' && *text_buf_pos <= 'z') ||
 		  (*text_buf_pos >= '0' && *text_buf_pos <= '9') ||
-		   *text_buf_pos == '_' || *text_buf_pos == '!'  || *text_buf_pos == ':')
+		   *text_buf_pos == '_' || *text_buf_pos == '!'  || 
+		   *text_buf_pos == ':')
 	{
 		printf_debug_msg("get_word: got %c\n", *text_buf_pos);
 		
+		// checking for forbidden start of the word
 		if ((*text_buf_pos == '!' || *text_buf_pos == ':') && word_size == 0)
 		{
 			printf_log_err("[from tokenizer][%s:%d:%d] -> failed to recognize token\n", 
 					FILE_NAME, CUR_LINE, get_current_pos(LINE_BEGIN, text_buf_pos));
 			return NULL;
 		}
-		word[word_size] = (char) tolower(*text_buf_pos);
+		word[word_size] = *text_buf_pos;
 		word_size++;
 		text_buf_pos++;
+
+		// checking is word is too big
 		if (word_size == max_word_len)
 		{
 			printf_log_err("[from tokenizer][%s:%d:%d] -> max word size exceeded\n", 
@@ -204,6 +260,7 @@ char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t
 		}
 	}
 
+	// checking if we read sth
 	if (word_size == 0)
 	{
 		printf_debug_msg("get_word: current_token is not a word, ended process\n");
@@ -211,9 +268,9 @@ char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t
 	}
 
 	printf_debug_msg("get_word: recognized word %s\n", word);
-
 	text_buf_pos = skip_spaces(text_buf_pos);
 
+	// checking for comments
 	if (strcmp(word, "note:") == 0)
 	{
 		printf_debug_msg("get_word: got comment\n");
@@ -222,19 +279,18 @@ char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t
 		return text_buf_pos;
 	}
 
-	// TODO - another function
+	// adding token to array
 	err_t checked = check_token_arr_capacity(token_arr_struct);
 	if (checked != ok) return NULL;
-
 	fill_node_draft(&T_ARR[ARR_SIZE], WORD, (union data_t){.word=word}, CUR_LINE);
 	ARR_SIZE++;
-	//
 
 	printf_debug_msg("get_word: ended process\n\n");
 	return text_buf_pos;
 }
 
 #undef CUR_LINE
+
 
 char* skip_comment(char* text_buf_pos)
 {
@@ -274,6 +330,9 @@ void dump_tokens(token_array_t* token_arr_struct)
 				else printf_debug_msg("%c\n", TOKEN_DATA.oper);
 				break;
 			case WORD:
+				printf_debug_msg("%s\n", TOKEN_DATA.word);
+				break;
+			case KEY:
 				printf_debug_msg("%s\n", TOKEN_DATA.word);
 				break;
 			default:
@@ -360,6 +419,24 @@ void clear_token_arr(token_array_t* token_arr_struct)
 #undef T_ARR
 #undef ARR_CAP
 #undef ARR_SIZE
+
+
+#define OPER_STR oper_data[i].oper_str
+
+
+#undef OPER_STR
+
+
+char* allocate_mem_for_word(size_t size)
+{
+	char* word = (char*) calloc(size, sizeof(char));
+	if (word == NULL)
+	{
+		printf_log_err("[allocate_mem_for_word] -> could not allocate memory for word\n");
+		return NULL;
+	}
+	return word;
+}
 
 
 char* skip_spaces(char* text_buf)

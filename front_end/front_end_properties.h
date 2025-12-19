@@ -30,6 +30,8 @@ enum oper_t
 	IS_MORE_OR_EQUAL_TO,
 	IS_EQUAL_TO,
 	IS_NOT_EQUAL_TO,
+	FROM,
+	RECIPE,
 
 	oper_count
 };

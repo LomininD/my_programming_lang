@@ -22,16 +22,18 @@ enum node_t
 union data_t 
 {
     int number;
-    char oper;
+    int oper;
     char* word;
 };
 
 struct node
 {
-    node* parent;
     node_t type;
     data_t data;
+    int code;
     int line;
+    int word_len;
+    node* parent;
     node* left;
     node* right;
 };

@@ -6,10 +6,12 @@
 struct oper_info_t
 {
 	oper_t oper;
-	char* oper_str;
+	const char* oper_str;
+	size_t oper_str_len;
 	bool convertible;
-	char* std_oper_str;
+	const char* std_oper_str;
 };
 
+extern oper_info_t oper_data[];
 
 #endif

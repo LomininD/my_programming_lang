@@ -31,6 +31,9 @@ void fill_node_draft(node* node_ptr, node_t type, union data_t data, int line)
     node_ptr->type = type;
     node_ptr->line = line;
 
+    if (type == WORD)
+        printf("word = %s\n", data.word);
+
     switch(type)
     {
         case OPER:
@@ -40,6 +43,9 @@ void fill_node_draft(node* node_ptr, node_t type, union data_t data, int line)
             DATA.number = data.number;
             break;
         case WORD:
+            DATA.word = data.word;
+            break;
+        case KEY:
             DATA.word = data.word;
             break;
         default:
