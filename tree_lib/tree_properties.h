@@ -15,14 +15,15 @@ enum node_t
 {
     OPER,
     WORD,
-    NUM
+    NUM,
+    KEY,
 };
 
 union data_t 
 {
     int number;
     char oper;
-    char* word; 
+    char* word;
 };
 
 struct node

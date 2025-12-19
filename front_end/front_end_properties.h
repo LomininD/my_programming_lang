@@ -1,6 +1,39 @@
 #ifndef FRONT_END_PROPERTIES_H
 #define FRONT_END_PROPERTIES_H
 
+enum oper_t
+{
+	EOS,
+	OPEN_PAR,
+	CLOSE_PAR,
+	COMMA,
+	BLOCK_BEGIN,
+	BLOCK_END,
+	TAKE,
+	IN_QUANTITY_OF,
+	ADD,
+	SUB,
+	PORTIONS_OF,
+	DILUTED_BY,
+	SEASONED,
+	COOK_UNTIL,
+	IF,
+	OTHERWISE_IF,
+	OTHERWISE,
+	SERVE,
+	BUY,
+	TASTE,
+	BON_APPETIT,
+	IS_LESS_THAN,
+	IS_LESS_OR_EQUAL_TO,
+	IS_MORE_THAN,
+	IS_MORE_OR_EQUAL_TO,
+	IS_EQUAL_TO,
+	IS_NOT_EQUAL_TO,
+
+	oper_count
+};
+
 #include "../debug_lib/debug.h"
 #include "../tree_lib/tree_properties.h"
 #include "../tree_lib/tree_funcs.h"

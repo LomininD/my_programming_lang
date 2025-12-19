@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
 
 	dump_tokens(&tokens);
 
+
+
 	clear_token_arr(&tokens);
 	clear_input_file_data(&input_file_data);
 	return 0;

@@ -1,0 +1,13 @@
+fact from n recipe
+<
+	take result in quantity of 1
+	cook until n less or equal to 0
+	Note: this is comment
+	<
+		take result in quantity of n portions of result
+		take n in quantity of n - 1
+	>
+	serve result
+>
+()
+,
