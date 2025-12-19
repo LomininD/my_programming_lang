@@ -27,5 +27,5 @@ oper_info_t oper_data[] = {{EOS, 					"\n", 			  		1,	true,		";"			},
 						   {IS_MORE_OR_EQUAL_TO,	"is more or equal to",  19,	true,		">="		},
 						   {IS_EQUAL_TO,			"is equal to",			11,	true,		"=="		},
 						   {IS_NOT_EQUAL_TO,		"is not equal to",		15,	true,  		"!="		},
-						   {FROM,					"from",					4,	true,		"param"     },
+						   {FROM,					"from",					4,	true,		"name"     },
 						   {RECIPE,					"recipe",				6,  true,		"func"		}};

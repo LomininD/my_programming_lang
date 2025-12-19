@@ -26,8 +26,9 @@ int main(int argc, char* argv[])
 	err_t tokenized = tokenize_text_buf(&input_file_data, &tokens);
 	IF_ERR(check_for_err(tokenized, &input_file_data, &tokens));
 
-
 	dump_tokens(&tokens);
+
+	//err_t linked = link_tokens(&tokens);
 
 
 

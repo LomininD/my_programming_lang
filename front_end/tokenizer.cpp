@@ -201,7 +201,7 @@ char* get_keyword(char* text_buf_pos, token_array_t* token_arr_struct, debug_inf
 
 
 			printf_debug_msg("get_word: recognized keyword %s, ended process\n", OPER_STR);
-			text_buf_pos += STR_LEN + 1; 
+			text_buf_pos += STR_LEN; 
 			text_buf_pos = skip_spaces(text_buf_pos);
 			return text_buf_pos;
 		}
@@ -238,7 +238,7 @@ char* get_word(char* text_buf_pos, token_array_t* token_arr_struct, debug_info_t
 		   *text_buf_pos == '_' || *text_buf_pos == '!'  || 
 		   *text_buf_pos == ':')
 	{
-		printf_debug_msg("get_word: got %c\n", *text_buf_pos);
+		// printf_debug_msg("get_word: got %c\n", *text_buf_pos);
 		
 		// checking for forbidden start of the word
 		if ((*text_buf_pos == '!' || *text_buf_pos == ':') && word_size == 0)
