@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include "tree_dump.h"
 #include "tree_funcs.h"
+#include "../front_end/oper_structs.h"
 
 
 size_t node_count = 0;
@@ -253,7 +254,8 @@ const node* list_nodes(FILE* fp, const node* current_node)
             FPRINT("%s", current_node->data.word);
             break;
         case OPER:
-            FPRINT("%c", current_node->data.oper);
+            if(current_node->data.oper == '\n') FPRINT("\\n");
+            else FPRINT("%c", current_node->data.oper);
             break;
         default:
             FPRINT("unknown");

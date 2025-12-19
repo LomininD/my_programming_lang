@@ -18,8 +18,6 @@ err_t link_tokens(token_array_t* token_arr_struct, const char* file_name, tree* 
 	token_tree->root = get_token_tree(token_arr_struct, file_name);
 	CHECK_ERR(error);
 
-	print_tree_dump(token_tree, "Token tree view\n");
-
 	printf_debug_msg("link_tokens: ended process\n\n");
 	return ok;
 }
@@ -57,7 +55,7 @@ node* get_token_tree(token_array_t* token_arr_struct, const char* file_name)
 				return NULL;											\
 }
 #define EOS_ERR {														\
-				printf_log_err("[syntax error][%s:%d] -> no \n in " 	\
+				printf_log_err("[syntax error][%s:%d] -> no \\n in " 	\
 				"the end of the line\n", file_name, CUR_TOKEN.line);	\
 				syntax_err = error;										\
 				return NULL;											\
@@ -137,6 +135,7 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 	NEXT_T;
 
 	if (CUR_TOKEN.code != EOS) EOS_ERR;
+	connection_node->right = &CUR_TOKEN;
 
 	NEXT;
 

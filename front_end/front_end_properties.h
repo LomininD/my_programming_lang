@@ -3,7 +3,8 @@
 
 enum oper_t
 {
-	EOS,
+	ERR,
+	EOS = 1,
 	OPEN_PAR,
 	CLOSE_PAR,
 	COMMA,

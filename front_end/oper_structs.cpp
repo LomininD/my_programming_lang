@@ -1,6 +1,7 @@
 #include "oper_structs.h"
 
-oper_info_t oper_data[] = {{EOS, 					"\n", 			  		1,	true,		";"			},
+oper_info_t oper_data[] = {{ERR,					"sys error",			9,	false,		""			},
+						   {EOS, 					"\n", 			  		1,	true,		";"			},
 						   {OPEN_PAR, 				"(", 			  		1,	true,		"("			},
 						   {CLOSE_PAR,				")",			  		1,	true,		")"			},
 						   {COMMA,					",",			  		1,	true,		","			},
