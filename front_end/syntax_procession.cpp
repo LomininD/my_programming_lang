@@ -3,7 +3,11 @@
 #include <string>
 
 static node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* file_name);
-node* get_token_tree(token_array_t* token_arr_struct, const char* file_name);
+static node* get_func(token_array_t* token_arr_struct, size_t* pos, const char* file_name);
+static node* get_line(token_array_t* token_arr_struct, size_t* pos, const char* file_name);
+static node* get_user_func(token_array_t* token_arr_struct, size_t* pos, const char* file_name);
+static node* get_token_tree(token_array_t* token_arr_struct, const char* file_name);
+static void revert_changes(token_array_t* token_arr_struct, size_t begin_pos, size_t* cur_pos);
 
 err_t syntax_err = ok;
 
@@ -33,11 +37,20 @@ node* get_token_tree(token_array_t* token_arr_struct, const char* file_name)
 
 	size_t pos = 0;
 
-	node* connection_node = get_func_decl(token_arr_struct, &pos, file_name);
+	// pay attention here, CHECK_SIZE?
+	node* connection_node = get_line(token_arr_struct, &pos, file_name);
+	CHECK_ERR(NULL);
+
+	if (connection_node == NULL)
+	{
+		connection_node = get_func_decl(token_arr_struct, &pos, file_name);
+		CHECK_ERR(NULL);
+	}
 
 	if (pos != ARR_SIZE)
 	{
 		printf_log_err("[from get_token_tree] -> unanalyzed tokens left\n");
+		syntax_err = error;
 		return NULL;
 	}
 
@@ -75,14 +88,105 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 {
 	assert(token_arr_struct);
 
-	node* connection_node = NULL;
+	node* func_node = get_func(token_arr_struct, pos, file_name);
+	CHECK_ERR(NULL);
 
-	printf_debug_msg("get_func_decl: began process\n");
+	if (CUR_TOKEN.code != RECIPE)
+	{
+		printf_log_err("[syntax error][%s:%d] -> wrong "
+					"declaration (no recipe)\n", file_name, CUR_TOKEN.line);
+		syntax_err = error;
+		return NULL;
+	}
+
+	printf_debug_msg("get_func_decl: recognized recipe keyword\n");
+	CUR_TOKEN.left = func_node;
+	func_node = &CUR_TOKEN;
+
+	NEXT_T;
+
+	if (CUR_TOKEN.code != EOS) EOS_ERR;
+	CUR_TOKEN.left = func_node;
+	node* connection_node = &CUR_TOKEN;
+
+	printf_debug_msg("get_func_decl: recognised eos\n");
+
+	NEXT;
+
+	printf_debug_msg("get_func_decl: ended process\n\n");
+	return connection_node;
+}
+
+
+node* get_line(token_array_t* token_arr_struct, size_t* pos, const char* file_name)
+{
+	assert(token_arr_struct);
+
+	printf_debug_msg("get_line: began process\n");
+
+	size_t begin_pos = *pos;
+
+	bool is_func = false;
+
+	node* line_node = get_user_func(token_arr_struct, pos, file_name);
+	CHECK_ERR(NULL);
+	CHECK_SIZE();
+	printf_debug_msg("get_line: recognized user_func\n");
+	is_func = true;
+
+	if (CUR_TOKEN.code != EOS)
+	{
+		if (is_func)
+		{
+			printf_debug_msg("get_line: not a line\n");
+			revert_changes(token_arr_struct, begin_pos, pos);
+			return NULL;
+		}
+		else EOS_ERR; 
+	}
+
+	CUR_TOKEN.left = line_node;
+	node* connection_node = &CUR_TOKEN;
+
+	printf_debug_msg("get_line: recognised eos\n");
+
+	NEXT;
+
+	printf_debug_msg("get_line: ended process\n\n");
+	return connection_node;
+}
+
+
+node* get_user_func(token_array_t* token_arr_struct, size_t* pos, const char* file_name)
+{
+	assert(token_arr_struct);
+
+	printf_debug_msg("get_user_func: began process\n");
+
+	node* connection_node = get_func(token_arr_struct, pos, file_name);
+	CHECK_ERR(NULL);
+
+	node* name_node = connection_node;
+	connection_node = connection_node->left;
+	connection_node->left = name_node->right;
+	name_node->left = name_node->right = NULL;
+	destroy_node(name_node);
+
+	printf_debug_msg("get_user_func: ended process\n\n");
+	return connection_node;
+}
+
+
+node* get_func(token_array_t* token_arr_struct, size_t* pos, const char* file_name)
+{
+	assert(token_arr_struct);
+
+	printf_debug_msg("get_func: began process\n");
 
 	if (CUR_TOKEN.type != WORD)
 		return NULL;
 
-	printf_debug_msg("get_func_decl: recognized name of recipe\n");
+	printf_debug_msg("get_func: recognized name of recipe\n");
 
 	node* name = create_node(); // name should be freed specially 
 	fill_node_draft(name, FUNC_INFO, (union data_t){.word = strdup("name")}, -1);
@@ -90,16 +194,16 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 	
 	NEXT_T;
 
-	printf_debug_msg("get_func_decl: created name node\n");
+	printf_debug_msg("get_func: created name node\n");
 
 	if (CUR_TOKEN.code == FROM)
 	{
-		printf_debug_msg("get_func_decl: recognized argument list\n");
+		printf_debug_msg("get_func: recognized argument list\n");
 		
 		NEXT_T;
 		if (CUR_TOKEN.type != WORD) ARG_ERR;
 
-		printf_debug_msg("get_func_decl: recognized argument\n");
+		printf_debug_msg("get_func: recognized argument\n");
 
 		NEXT_T;
 		node* prev_node = name;
@@ -111,36 +215,16 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 			prev_node = &CUR_TOKEN;
 			NEXT_T;
 			if (CUR_TOKEN.type != WORD) ARG_ERR;
-			NEXT_T;
+			NEXT;
 
-			printf_debug_msg("get_func_decl: recognized another argument\n");
+			printf_debug_msg("get_func: recognized another argument\n");
 		}
 
 		prev_node->right = &PREV_TOKEN;
 	}
 
-	if (CUR_TOKEN.code != RECIPE)
-	{
-		printf_log_err("[syntax error][%s:%d] -> wrong "
-					"declaration (no recipe)\n", file_name, CUR_TOKEN.line);
-		syntax_err = error;
-		return NULL;
-	}
-
-	printf_debug_msg("get_func_decl: recognized recipe keyword\n");
-
-	CUR_TOKEN.left = name;
-	connection_node = &CUR_TOKEN;
-
-	NEXT_T;
-
-	if (CUR_TOKEN.code != EOS) EOS_ERR;
-	connection_node->right = &CUR_TOKEN;
-
-	NEXT;
-
-	printf_debug_msg("get_func_decl: ended process\n\n");
-	return connection_node;
+	printf_debug_msg("get_func: ended process\n\n");
+	return name;
 }
 
 #undef CUR_TOKEN
@@ -154,7 +238,23 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 #undef ARR_SIZE
 
 
-// node* get_token_tree(token_array_t* token_arr_struct, size_t* pos, char* file_name)
+#define CUR_TOKEN token_arr_struct->array[i]
+
+void revert_changes(token_array_t* token_arr_struct, size_t begin_pos, size_t* cur_pos)
+{
+	assert(token_arr_struct);
+
+	for (size_t i = begin_pos; i < *cur_pos; i++)
+	{
+		CUR_TOKEN.left = NULL;
+		CUR_TOKEN.right = NULL;
+	}
+	*cur_pos = begin_pos;
+}
+
+#undef CUR_TOKEN
+
+// node* get_token_tree(token_array_t* token_arr_struct, size_t* pos, const char* file_name)
 // {
 // 	assert(token_arr_struct);
 // 
@@ -163,6 +263,7 @@ node* get_func_decl(token_array_t* token_arr_struct, size_t* pos, const char* fi
 // 	size_t begin_pos = *pos;
 // 
 // 	printf_debug_msg("get_token_tree: ended process\n\n");
+//  return connection_node;
 // }
 
 
